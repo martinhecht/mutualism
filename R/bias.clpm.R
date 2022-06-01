@@ -5,9 +5,11 @@
 #' @title
 #' @description
 #' @param Afull autoregression matrix of the full CLPM
-#' @param CovMatrixfull either covariance matrix (stationary=FALSE) or process error covariance matrix (stationary=TRUE) of the full CLPM
+#' @param CovMatrixfull either first time point covariance matrix (stationary=FALSE) or process error covariance matrix (stationary=TRUE) of the full CLPM
 #' @param F1 number of processes of reduced model
 #' @param F2 number of omitted processes in the reduced model
+#' @param stationary (logical), FALSE (default): CovMatrixfull is first time point covariance matrix, TRUE: CovMatrixfull is process error covariance matrix
+#' @param extended.results (logical), FALSE (default): bias as matrix is returned, TRUE: additional results (including bias in long format) is returned
 #' @return
 
 ## Function definition
