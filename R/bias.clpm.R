@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.2 2022-06-02: updated based on clpm_bias_v2.pdf 2022-06-02
 # MH 0.0.1 2022-05-31: based on clpm_bias_v1.pdf 2022-05-29
 
 ## Documentation
@@ -37,9 +38,12 @@ bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=FALSE, extended.
 		
 		## bias
 		# c:\Users\martin\Dropbox\96_mutualism\03_models\07_clpm_matr3T\01_bias\clpm_bias_v1.pdf (2022-05-29)
-		bias.first.term <- A11 %*% ( G11 %*% - diag( F1 ) )
-		bias.second.term <- A12 %*% G21 %*% solve( G11 )
-		bias <- bias.first.term + bias.second.term
+		#bias.first.term <- A11 %*% ( G11 %*% - diag( F1 ) )
+		#bias.second.term <- A12 %*% G21 %*% solve( G11 )
+		#bias <- bias.first.term + bias.second.term
+		# 0.0.2 2022-06-02: updated based on clpm_bias_v2.pdf 2022-06-02
+		# c:\Users\martin\Dropbox\96_mutualism\03_models\07_clpm_matr3T\01_bias\clpm_bias_v2.pdf (2022-06-02)
+		bias <- A12 %*% G21 %*% solve( G11 )
 		
 		# return object
 		if( !extended.results ) {
