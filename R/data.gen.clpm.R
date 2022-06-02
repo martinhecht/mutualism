@@ -70,14 +70,14 @@ data.gen.clpm <- function( A, Q, G=NULL, stationary=TRUE, N=1, T=2, seed="random
 }
 
 ### development
-user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
-Rfiles.folder <- file.path( user.profile,
-                                    "Dropbox/96_mutualism/mutualism/R" )
-Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
-Rfiles <- Rfiles[ !Rfiles %in% c("data.gen.clpm.R") ]
-for( Rfile in Rfiles ){
-	source( file.path( Rfiles.folder, Rfile ) )
-}
+# user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
+# Rfiles.folder <- file.path( user.profile,
+                                    # "Dropbox/96_mutualism/mutualism/R" )
+# Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
+# Rfiles <- Rfiles[ !Rfiles %in% c("data.gen.clpm.R") ]
+# for( Rfile in Rfiles ){
+	# source( file.path( Rfiles.folder, Rfile ) )
+# }
 
 ### test1a
 # F <- 3
