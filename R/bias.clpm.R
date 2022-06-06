@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.3 2022-06-06: minor aesthetic fixes, nothing core functional
 # MH 0.0.2 2022-06-02: updated based on clpm_bias_v2.pdf 2022-06-02
 # MH 0.0.1 2022-05-31: based on clpm_bias_v1.pdf 2022-05-29
 
@@ -14,7 +15,7 @@
 #' @return
 
 ## Function definition
-bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=FALSE, extended.results=FALSE ){
+bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=TRUE, extended.results=FALSE ){
 		
 		# F
 		F <- F1 + F2
@@ -75,8 +76,9 @@ bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=FALSE, extended.
 			rownames( bias.long ) <- seq( along=rownames( bias.long ) )
 			
 			# return list
-			ret <- list( bias, bias.first.term, bias.second.term, bias.long )
-			names( ret ) <- c( "bias", "bias.first.term", "bias.second.term", "bias.long" )
+			# ret <- list( bias, bias.first.term, bias.second.term, bias.long )
+			ret <- list( bias, bias.long )
+			names( ret ) <- c( "bias", "bias.long" )
 		}
 		
 		# return
@@ -97,7 +99,9 @@ bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=FALSE, extended.
 # F <- 3
 # A <- matrix( c( 0.5,0,0, 0,0.5,0, 0.5,0.5,0.5 ), nrow=F, ncol=F )
 # G <- matrix( c( 1,0.5,0.5, 0.5,1,0.5, 0.5,0.5,1 ), nrow=F, ncol=F )
+# bias.clpm( A, G, 2, 1 )
 # bias.clpm( A, G, 2, 1, extended.results=TRUE )
+# bias.clpm( A, G, 2, 1, stationary=FALSE )
 
 ### test2
 # F <- 4
