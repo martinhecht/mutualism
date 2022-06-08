@@ -1,27 +1,24 @@
 ## Changelog:
-# MH 0.0.4 2022-06-08: DEPRECATED, use bias() with model="CLPM"
-# MH 0.0.3 2022-06-06: minor aesthetic fixes, nothing core functional
-# MH 0.0.2 2022-06-02: updated based on clpm_bias_v2.pdf 2022-06-02
-# MH 0.0.1 2022-05-31: based on clpm_bias_v1.pdf 2022-05-29
+# MH 0.0.1 2022-06-08: originally bias.clpm, extended for RI-CLPM
 
 ## Documentation
-#' @title DEPRECATED, use bias() with reduced.model="CLPM"
+#' @title
 #' @description
 #' @param Afull autoregression matrix of the full CLPM
 #' @param CovMatrixfull either first time point covariance matrix (stationary=FALSE) or process error covariance matrix (stationary=TRUE) of the full CLPM
 #' @param F1 number of processes of reduced model
 #' @param F2 number of omitted processes in the reduced model
+#' @param reduced.model reduced model, either CLPM [default] or RI-CLPM
+#' @param B only for reduced.model="RI-CLPM", between-person intercept covariance matrix
 #' @param stationary (logical), FALSE (default): CovMatrixfull is first time point covariance matrix, TRUE: CovMatrixfull is process error covariance matrix
 #' @param extended.results (logical), FALSE (default): bias as matrix is returned, TRUE: additional results (including bias in long format) is returned
 #' @return
 
-## Function definition, > 0.0.5
-bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=TRUE, extended.results=FALSE ){
-	return( bias( Afull=Afull, CovMatrixfull=CovMatrixfull, F1=F1, F2=F2, reduced.model="CLPM", stationary=stationary, extended.results=extended.results ) )
-}
-
-## Function definition, old <= 0.0.5
-.bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=TRUE, extended.results=FALSE ){
+## Function definition
+bias <- function( Afull, CovMatrixfull, F1, F2, reduced.model=c("CLPM","RI-CLPM"), B=matrix(0,F1,F1), stationary=TRUE, extended.results=FALSE ){
+		
+		# reduced.model
+		if( length( reduced.model ) > 1 ) reduced.model <- reduced.model[1]
 		
 		# F
 		F <- F1 + F2
@@ -44,18 +41,26 @@ bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=TRUE, extended.r
 		G21 <- Gfull[(F1+1):F,1:F1,drop=FALSE]		
 		
 		## bias
-		# c:\Users\martin\Dropbox\96_mutualism\03_models\07_clpm_matr3T\01_bias\clpm_bias_v1.pdf (2022-05-29)
-		#bias.first.term <- A11 %*% ( G11 %*% - diag( F1 ) )
-		#bias.second.term <- A12 %*% G21 %*% solve( G11 )
-		#bias <- bias.first.term + bias.second.term
-		# 0.0.2 2022-06-02: updated based on clpm_bias_v2.pdf 2022-06-02
-		# c:\Users\martin\Dropbox\96_mutualism\03_models\07_clpm_matr3T\01_bias\clpm_bias_v2.pdf (2022-06-02)
-		bias <- A12 %*% G21 %*% solve( G11 )
+		
+		if( reduced.model %in% "CLPM" ){
+				# c:\Users\martin\Dropbox\96_mutualism\03_models\07_clpm_matr3T\01_bias\clpm_bias_v1.pdf (2022-05-29)
+				#bias.first.term <- A11 %*% ( G11 %*% - diag( F1 ) )
+				#bias.second.term <- A12 %*% G21 %*% solve( G11 )
+				#bias <- bias.first.term + bias.second.term
+				# 0.0.2 2022-06-02: updated based on clpm_bias_v2.pdf 2022-06-02
+				# c:\Users\martin\Dropbox\96_mutualism\03_models\07_clpm_matr3T\01_bias\clpm_bias_v2.pdf (2022-06-02)
+				bias <- A12 %*% G21 %*% solve( G11 )
+		} else if( reduced.model %in% "RI-CLPM" ){
+				# c:\Users\martin\Dropbox\96_mutualism\03_models\10_riclpm\01_bias\riclpm_bias_v1.pdf (2022-06-08)
+				bias <- (A11 %*% G11 + A12 %*% G21 - B) %*% solve( G11 - B ) - A11
+		} else {
+				bias <- NULL
+		}
 		
 		# return object
 		if( !extended.results ) {
 			ret <- bias
-		} else {
+		} else if (!is.null(bias)){
 			# R package
 			require( reshape2 ) # melt()
 			
@@ -85,6 +90,8 @@ bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=TRUE, extended.r
 			# ret <- list( bias, bias.first.term, bias.second.term, bias.long )
 			ret <- list( bias, bias.long )
 			names( ret ) <- c( "bias", "bias.long" )
+		} else {
+			ret <- bias
 		}
 		
 		# return
@@ -96,7 +103,7 @@ bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=TRUE, extended.r
 # Rfiles.folder <- file.path( user.profile,
                                     # "Dropbox/96_mutualism/mutualism/R" )
 # Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("bias.clpm.R") ]
+# Rfiles <- Rfiles[ !Rfiles %in% c("bias.R") ]
 # for( Rfile in Rfiles ){
 	# source( file.path( Rfiles.folder, Rfile ) )
 # }
@@ -105,11 +112,17 @@ bias.clpm <- function( Afull, CovMatrixfull, F1, F2, stationary=TRUE, extended.r
 # F <- 3
 # A <- matrix( c( 0.5,0,0, 0,0.5,0, 0.5,0.5,0.5 ), nrow=F, ncol=F )
 # G <- matrix( c( 1,0.5,0.5, 0.5,1,0.5, 0.5,0.5,1 ), nrow=F, ncol=F )
-# bias.clpm( A, G, 2, 1 )
-# bias.clpm( A, G, 2, 1, extended.results=TRUE )
-# bias.clpm( A, G, 2, 1, stationary=FALSE )
+# bias( A, G, 2, 1 )
+# bias( A, G, 2, 1, extended.results=TRUE )
+# bias( A, G, 2, 1, stationary=FALSE )
 
 ### test2
+# bias( A, G, 2, 1, reduced.model="RI-CLPM" )
+# bias( A, G, 2, 1, stationary=FALSE, reduced.model="RI-CLPM" )
+# F1 <- 2
+# bias( A, G, F1, 1, B=matrix(0.5,F1,F1), reduced.model="RI-CLPM" )
+
+### test3
 # F <- 4
 # A <- matrix( c( 0.5,0,0,0, 0,0.5,0,0, 0.25,0.25,0.5,0, 0.25,0.25,0.5,0.5 ), nrow=F, ncol=F )
 # G <- matrix( c( 1,0.5,0.5,0.5, 0.5,1,0.5,0.5, 0.5,0.5,1,0.5, 0.5,0.5,0.5,1 ), nrow=F, ncol=F )
