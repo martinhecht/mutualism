@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.7 2022-10-12: new bias formula for RI-CLPM (v1 2022-09-16)
 # MH 0.0.1 2022-06-08: originally bias.clpm, extended for RI-CLPM
 
 ## Documentation
@@ -15,7 +16,8 @@
 #' @return
 
 ## Function definition
-bias <- function( Afull, CovMatrixfull, F1, F2, reduced.model=c("CLPM","RI-CLPM"), B=matrix(0,F1,F1), stationary=TRUE, extended.results=FALSE ){
+# bias <- function( Afull, CovMatrixfull, F1, F2, reduced.model=c("CLPM","RI-CLPM"), B=matrix(0,F1,F1), stationary=TRUE, extended.results=FALSE ){
+bias <- function( Afull, CovMatrixfull, F1, F2, reduced.model=c("CLPM","RI-CLPM"), stationary=TRUE, extended.results=FALSE ){
 		
 		# reduced.model
 		if( length( reduced.model ) > 1 ) reduced.model <- reduced.model[1]
@@ -26,6 +28,9 @@ bias <- function( Afull, CovMatrixfull, F1, F2, reduced.model=c("CLPM","RI-CLPM"
 		# Afull submatrices
 		A11 <- Afull[1:F1,1:F1,drop=FALSE]
 		A12 <- Afull[1:F1,(F1+1):F,drop=FALSE]
+		# MH 0.0.7 2022-10-12
+		A21 <- Afull[(F1+1):F,1:F1,drop=FALSE]
+		A22 <- Afull[(F1+1):F,(F1+1):F,drop=FALSE]
 
 		## CovMatrix
 		# if stationary=FALSE: covariance matrix of first time point
@@ -52,7 +57,15 @@ bias <- function( Afull, CovMatrixfull, F1, F2, reduced.model=c("CLPM","RI-CLPM"
 				bias <- A12 %*% G21 %*% solve( G11 )
 		} else if( reduced.model %in% "RI-CLPM" ){
 				# c:\Users\martin\Dropbox\96_mutualism\03_models\10_riclpm\01_bias\riclpm_bias_v1.pdf (2022-06-08)
-				bias <- (A11 %*% G11 + A12 %*% G21 - B) %*% solve( G11 - B ) - A11
+				# bias <- (A11 %*% G11 + A12 %*% G21 - B) %*% solve( G11 - B ) - A11
+				### MH 0.0.7 2022-10-12
+				# c:\Users\martin\Dropbox\96_mutualism\03_models\09_riclpm\02_bias\riclpm_bias_v1.pdf (2022-09-16)
+				bias <- (   ( A11 %*% A11 + A12 %*% A21 ) %*% G11
+						  + ( A11 %*% A12 + A12 %*% A22 ) %*% G21
+						  - A11 %*% G11 - A12 %*% G21
+						) %*% solve( A11 %*% G11 + A12 %*% G21 - G11 )
+						- A11
+				
 		} else {
 				bias <- NULL
 		}
