@@ -1,9 +1,10 @@
 ## Changelog:
+# MH 0.0.9 2022-10-15: added F parameter, F<=4 recommended (then with max.tries=1000 seems to always work)
 # MH 0.0.1 2022-06-02
 
 ## Documentation
 #' @title
-#' @description right now only for F=3
+#' @description
 #' @param
 #' @param
 #' @param
@@ -11,7 +12,7 @@
 
 
 ## Function definition
-gen.matrices <- function(){
+gen.matrices <- function(F=3,verbose=FALSE){
 		
 		# R package
 		require( matrixcalc ) # is.positive.definite()
@@ -19,48 +20,70 @@ gen.matrices <- function(){
 		
 		# ret <- structure( "message", class = c("try-error", "character") )
 		# while( inherits( ret, "try-error" ) ){
-		ret <- NULL
-		while( is.null( ret ) ){
-			ret <- try( withTimeout( .gen.matrices(), timeout = 1, onTimeout = "silent" ) )
-		}
+		# ret <- NULL
+		# while( is.null( ret ) ){
+			# ret <- try( withTimeout( .gen.matrices(F=F,verbose=verbose), timeout = 10, onTimeout = "silent" ) )
+		# }
+		
+		ret <- .gen.matrices(F=F,verbose=verbose)
 		
 		return( ret )
 }
 
-.gen.matrices <- function(){
+.gen.matrices <- function(F,verbose){
 
 	# start time                                                         
 	# start <- Sys.time()
 	
 	# number of processes
-	F <- 3
+	# F <- 3
 	
+	G <- matrix(0,nrow=F,ncol=F)
 	asG <- matrix(0,nrow=F,ncol=F)
-	while( any( diag( asG ) < 0.1 ) | any( diag( asG ) > 10 ) ){
+	# while( any( diag( asG ) < 0.1 ) | any( diag( asG ) > 10 ) | is.positive.definite( asG ) ){
+	# while( !is.positive.definite( G ) || !is.positive.definite( asG ) ){
+	tries <- 1
+	max.tries <- 1000
+	while( !is.positive.definite( G ) || !is.positive.definite( asG ) && (tries <= max.tries) ){
 
-		A <- matrix( c( runif(1,0.25,0.75),runif(1,0,0.5),runif(1,0,0.5),
-						runif(1,0,0.5),runif(1,0.25,0.75),runif(1,0,0.5),
-						runif(1,0,0.5),runif(1,0,0.5),runif(1,0.25,0.75) ), nrow=F, ncol=F )
-		
+		if( verbose ) { cat( paste0( tries, "\n" ) ); flush.console() }
+
+		# A <- matrix( c( runif(1,0.25,0.75),runif(1,0,0.5),runif(1,0,0.5),
+						# runif(1,0,0.5),runif(1,0.25,0.75),runif(1,0,0.5),
+						# runif(1,0,0.5),runif(1,0,0.5),runif(1,0.25,0.75) ), nrow=F, ncol=F )
+		# off-diagonals
+		A <- matrix( sapply( 1:(F^2), function(x) runif(1,0,0.5) ), nrow=F,ncol=F )
+		# diagonals
+		for( f in 1:F ) A[f,f] <- runif(1,0.25,0.75)
+			
 		G <- matrix(0,nrow=F,ncol=F)
-		tries <- 1
-		max.tries <- 100
-		while( !is.positive.definite( G ) & !is.positive.definite( asG ) & tries < max.tries ){
+		asG <- matrix(0,nrow=F,ncol=F)
+
+		# while( ( !is.positive.definite( G ) | !is.positive.definite( asG ) ) & !(tries < max.tries) ){
+		# while( ( !is.positive.definite( G ) || !is.positive.definite( asG ) ) && (tries <= max.tries) ){
 				
-				# cat( paste0( tries, " " ) ); flush.console()
+
 				
-				G <- matrix( c( runif(1,0.5,1.5),NA,NA,
-								runif(1,-0.5,0.5),runif(1,0.5,1.5),NA,
-								runif(1,-0.5,0.5),runif(1,-0.5,0.5),runif(1,0.5,1.5) ), nrow=F, ncol=F )
-				G[ lower.tri(G) ] <- G[ upper.tri(G) ]
+				# G <- matrix( c( runif(1,0.5,1.5),NA,NA,
+								# runif(1,-0.5,0.5),runif(1,0.5,1.5),NA,
+								# runif(1,-0.5,0.5),runif(1,-0.5,0.5),runif(1,0.5,1.5) ), nrow=F, ncol=F )
+				
+				# off-diagonals
+				G <- matrix( sapply( 1:(F^2), function(x) runif(1,-0.5,0.5) ), nrow=F,ncol=F )
+				# diagonals
+				for( f in 1:F ) G[f,f] <- runif(1,0.5,1.5)
+				# mirror
+				G[ upper.tri(G) ] <- t(G)[ upper.tri(G) ]
 				
 				asG <- irow( solve( diag(F^2) - A %x% A ) %*% row( G ) )
 				# warum auch immer, asG wird nicht als symmetrische Matrix von is.positive.definite erkannt,
 				# obwohl natürlich quasi symmetrisch
-				asG[ lower.tri(asG) ] <- asG[ upper.tri(asG) ]
+				asG[ upper.tri(asG) ] <- t(asG)[ upper.tri(asG) ]
+				
 				tries <- tries + 1
-		}
-		if( tries >= max.tries ) asG <- matrix(0,nrow=F,ncol=F)
+
+		# }
+		# if( tries >= max.tries ) asG <- matrix(0,nrow=F,ncol=F)
 
 	}
 	# run time                                                           
@@ -83,7 +106,11 @@ gen.matrices <- function(){
 	# source( file.path( Rfiles.folder, Rfile ) )
 # }
 
-# while( TRUE ) { print( gen.matrices() ); flush.console() }
+# print( m <- gen.matrices(F=4,verbose=TRUE) )
+# is.positive.definite( m$G )
+# is.positive.definite( m$asG )
+
+# while( TRUE ) { print( m <- gen.matrices(F=4,verbose=TRUE) ); print( is.positive.definite( m$G ) ) ; print( is.positive.definite( m$asG ) ); flush.console() }
 
 
 ### test
