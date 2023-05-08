@@ -1,23 +1,31 @@
 ## Changelog:
+# MH 0.0.11 2023-05-08: RI-CLPM2
 # MH 0.0.10 2023-05-08: bug fixes in RI-CLPM (first time point variance now free, b now not into first time point) and removed latent
 # MH 0.0.8 2022-10-14: initial programming
 
 ## Function definition
 #### only F (number of processes) = 2 !!!
 #### t1.stationary: only FALSE !!!
-gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM"), T=2, t1.stationary=FALSE ){
+gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM","RI-CLPM2"), T=2, t1.stationary=FALSE ){
 		
 		syn <- NULL
 		
-		if( model %in% "RI-CLPM" ){
+		if( model %in% c("RI-CLPM","RI-CLPM2") ){
 			if( !t1.stationary ){
 				# RICLPM lavaan syntax
 				# https://jeroendmulder.github.io/RI-CLPM/lavaan.html
 				syn <- "# Create between components (random intercepts)"
 				### MH 0.0.10 2023-05-08: now starting from second time point
-				syn <- c(syn,	paste0( "RIx =~", paste(paste0( "1*x.",2:T ), collapse=" + " ), "\n",
-										"RIy =~", paste(paste0( "1*y.",2:T ), collapse=" + " )  )
-							)
+				if( model %in% c("RI-CLPM") ){
+						syn <- c(syn,	paste0( "RIx =~", paste(paste0( "1*x.",2:T ), collapse=" + " ), "\n",
+												"RIy =~", paste(paste0( "1*y.",2:T ), collapse=" + " )  )
+								) } else {
+						# MH 0.0.11 2023-05-08: RI-CLPM2				
+						syn <- c(syn,	paste0( "RIx =~1*x.1 + ", paste(paste0( "l1*x.",2:T ), collapse=" + " ), "\n",
+												"RIy =~1*y.1 + ", paste(paste0( "l2*y.",2:T ), collapse=" + " )  )
+								)
+				}
+				
 				### MH 0.0.10 2023-05-08: removed
 				# syn <- c(syn, "# Create within-person centered variables" )
 				# for( t in 1:T ){
