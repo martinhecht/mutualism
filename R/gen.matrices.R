@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.12 2023-05-08: eigenvalue check for A
 # MH 0.0.9 2022-10-15: added F parameter, F<=4 recommended (then with max.tries=1000 seems to always work)
 # MH 0.0.1 2022-06-02
 
@@ -43,8 +44,11 @@ gen.matrices <- function(F=3,verbose=FALSE){
 	# while( any( diag( asG ) < 0.1 ) | any( diag( asG ) > 10 ) | is.positive.definite( asG ) ){
 	# while( !is.positive.definite( G ) || !is.positive.definite( asG ) ){
 	tries <- 1
-	max.tries <- 1000
-	while( !is.positive.definite( G ) || !is.positive.definite( asG ) && (tries <= max.tries) ){
+	max.tries <- 10000
+	# while( !is.positive.definite( G ) || !is.positive.definite( asG ) && (tries <= max.tries) ){
+	# MH 0.0.12 2023-05-08: eigenvalue check for A
+	eigval.check <- FALSE
+	while( !eigval.check || !is.positive.definite( G ) || !is.positive.definite( asG ) && (tries <= max.tries) ){
 
 		if( verbose ) { cat( paste0( tries, "\n" ) ); flush.console() }
 
@@ -55,7 +59,11 @@ gen.matrices <- function(F=3,verbose=FALSE){
 		A <- matrix( sapply( 1:(F^2), function(x) runif(1,0,0.5) ), nrow=F,ncol=F )
 		# diagonals
 		for( f in 1:F ) A[f,f] <- runif(1,0.25,0.75)
-			
+		
+		# eigenvalue check
+		eva <- eigen(A)$values
+		eigval.check <- !is.complex(eva) && all(eva <1) && all(eva<0.95)
+		
 		G <- matrix(0,nrow=F,ncol=F)
 		asG <- matrix(0,nrow=F,ncol=F)
 
@@ -88,8 +96,13 @@ gen.matrices <- function(F=3,verbose=FALSE){
 	}
 	# run time                                                           
 	# print( runtime <- Sys.time() - start )
-
-	ret <- list( A, G, asG )
+	
+	if( tries > max.tries ){
+		ret <- list( NULL, NULL, NULL )
+		stop( "gen.matrices(): no matrices found within tries limit." )
+	} else {
+		ret <- list( A, G, asG )
+	}
 	names( ret ) <- c( "A", "G", "asG" )
 
     return( ret )

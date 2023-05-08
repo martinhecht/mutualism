@@ -1,2 +1,4 @@
 import(reshape2,MASS,matrixcalc,R.utils)
 exportPattern("^[[:alpha:]]+")
+importFrom("stats", "runif")
+importFrom("utils", "flush.console")
