@@ -1,5 +1,5 @@
 ## Changelog:
-# MH 0.0.2 2022-09-22: DEPRECATED, use data.gen.clpm.riclpm()
+# MH 0.0.2 2022-09-22
 # MH 0.0.1 2022-06-01
 
 ## Documentation
@@ -15,7 +15,7 @@
 #' @return
 
 ## Function definition
-data.gen.clpm <- function( A, Q, G=NULL, stationary=TRUE, N=1, T=2, seed="random" ){
+data.gen.clpm.riclpm <- function( A, Q, G=NULL, B=NULL, stationary=TRUE, N=1, T=2, seed="random" ){
 		
 		# packages
 		require( MASS ) # mvrnorm()
@@ -35,16 +35,43 @@ data.gen.clpm <- function( A, Q, G=NULL, stationary=TRUE, N=1, T=2, seed="random
 		}
 		set.seed( seed )
 		
-		# initialization of output array
+		## initialization of output array
 		x <- array( NA, dim=c(F,T,N) )
+		# indiviudal means (for RI-CLPM)
+		if( !is.null( B ) ){
+			muj <- array( NA, dim=c(F,N) )
 
-		# data generation
+			# term used for t >= 2 data generation with individual means
+			# (compute that once here to avoid computing it in the heave loop)
+			IminusA <- (diag(F) - A)
+		}
+
+		## data generation
+		
+		# indiviudal means (for RI-CLPM)
+		if( !is.null( B ) ){
+			for( n in 1:N ){
+				muj[,n] <- mvrnorm( 1, mu=rep(0,F), Sigma=B )
+			}
+		}
+		
+		# time series
 		for( n in 1:N ){
 			for( t in 1:T ){
+				# first time point
 				if( t %in% 1 ){
 					x[,1,n] <- mvrnorm( 1, mu=rep(0,F), Sigma=G )
+					# indiviudal means (for RI-CLPM)
+					if( !is.null( B ) ){
+						x[,1,n] <- x[,1,n] + muj[,n]
+					}
+				# t >= 2
 				} else {
 					x[,t,n] <- A %*% x[,t-1,n] + mvrnorm( 1, mu=rep(0,F), Sigma=Q )
+					# indiviudal means (for RI-CLPM)
+					if( !is.null( B ) ){
+						x[,t,n] <- x[,t,n] + IminusA %*% muj[,n]
+					}
 				}
 			}
 		}		
@@ -84,11 +111,16 @@ data.gen.clpm <- function( A, Q, G=NULL, stationary=TRUE, N=1, T=2, seed="random
 # F <- 3
 # A <- matrix( c( 0.5,0,0, 0,0.5,0, 0.5,0.5,0.5 ), nrow=F, ncol=F )
 # Q <- matrix( c( 1,0.5,0.5, 0.5,1,0.5, 0.5,0.5,1 ), nrow=F, ncol=F )
-# ( dl <- data.gen.clpm( A, Q, N=5, T=10 )$dl )
+# ( dl <- data.gen.clpm.riclpm( A, Q, N=5, T=10 )$dl )
 
 ### test1b
 # G <- matrix( c( 2,1,1, 1,2,1, 1,1,2 ), nrow=F, ncol=F )
-# ( dl <- data.gen.clpm( A, Q, G, stationary=FALSE, N=5, T=10 )$dl )
+# ( dl <- data.gen.clpm.riclpm( A, Q, G, stationary=FALSE, N=5, T=10 )$dl )
+
+### test1c
+# B <- matrix( c( 2,1,1, 1,2,1, 1,1,2 ), nrow=F, ncol=F )
+# ( dl <- data.gen.clpm.riclpm( A, Q, G, B, stationary=FALSE, N=5, T=10 )$dl )
+
 
 ### test
 # require( testthat )
