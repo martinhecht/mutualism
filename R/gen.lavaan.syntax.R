@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.14 2023-09-22: RI-CLPM3, intercept set to 1 for t >= 2, freely estimated parameter for intercept (=mean) at t=1
 # MH 0.0.11 2023-05-08: RI-CLPM2
 # MH 0.0.10 2023-05-08: bug fixes in RI-CLPM (first time point variance now free, b now not into first time point) and removed latent
 # MH 0.0.8 2022-10-14: initial programming
@@ -6,11 +7,11 @@
 ## Function definition
 #### only F (number of processes) = 2 !!!
 #### t1.stationary: only FALSE !!!
-gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM","RI-CLPM2"), T=2, t1.stationary=FALSE ){
+gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM","RI-CLPM2","RI-CLPM3"), T=2, t1.stationary=FALSE ){
 		
 		syn <- NULL
 		
-		if( model %in% c("RI-CLPM","RI-CLPM2") ){
+		if( model %in% c("RI-CLPM","RI-CLPM2","RI-CLPM3") ){
 			if( !t1.stationary ){
 				# RICLPM lavaan syntax
 				# https://jeroendmulder.github.io/RI-CLPM/lavaan.html
@@ -19,11 +20,14 @@ gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM","RI-CLPM2"), T=2, t1.sta
 				if( model %in% c("RI-CLPM") ){
 						syn <- c(syn,	paste0( "RIx =~", paste(paste0( "1*x.",2:T ), collapse=" + " ), "\n",
 												"RIy =~", paste(paste0( "1*y.",2:T ), collapse=" + " )  )
-								) } else {
+								) } else if ( model %in% c("RI-CLPM2") ){
 						# MH 0.0.11 2023-05-08: RI-CLPM2				
 						syn <- c(syn,	paste0( "RIx =~1*x.1 + ", paste(paste0( "l1*x.",2:T ), collapse=" + " ), "\n",
 												"RIy =~1*y.1 + ", paste(paste0( "l2*y.",2:T ), collapse=" + " )  )
-								)
+								) } else if ( model %in% c("RI-CLPM3") ){
+						# MH 0.0.14 2023-09-22: RI-CLPM3
+						syn <- c(syn,	paste0( "RIx =~l1*x.1 + ", paste(paste0( "1*x.",2:T ), collapse=" + " ), "\n",
+												"RIy =~l2*y.1 + ", paste(paste0( "1*y.",2:T ), collapse=" + " )  )  )
 				}
 				
 				### MH 0.0.10 2023-05-08: removed
@@ -101,6 +105,7 @@ gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM","RI-CLPM2"), T=2, t1.sta
 
 ### 
 # cat( gen.lavaan.syntax( "RI-CLPM", T=4 ) )
+# cat( gen.lavaan.syntax( "RI-CLPM3", T=4 ) )
 # cat( gen.lavaan.syntax( "CLPM", T=4 ) )
 
 
