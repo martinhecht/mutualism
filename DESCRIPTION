@@ -1,8 +1,8 @@
 Package: mutualism
 Type: Package
 Title: What the Package Does in One 'Title Case' Line
-Version: 0.0.14
-Date: 2022-09-22
+Version: 0.0.15
+Date: 2022-09-23
 Author: Your Name
 Maintainer: Your Name <your@email.com>
 Description: One paragraph description of what the package does as one or more full sentences.
