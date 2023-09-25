@@ -13,6 +13,8 @@ gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM"), T=2, t1.stationary=FAL
 		
 		# cautionary note
 		if( model %in% "RI-CLPM" ) cat( "\nNote: Starting from version 0.0.15, the RI-CLPM model has changed (now with constraints for random process means)!\n      Be cautious when using old scripts that depend on versions <= 0.0.14\n\n" )
+		# error
+		if( t1.stationary ) stop( "\nt1.stationary=TRUE is NOT YET WORKING. Stop!\n\n" )
 		
 		# syntax object
 		syn <- NULL
