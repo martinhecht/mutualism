@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.17 2025-04-11: bugfix var.names (for >26 processes)
 # MH 0.0.2 2022-09-22
 # MH 0.0.1 2022-06-01
 
@@ -83,7 +84,10 @@ data.gen.clpm.riclpm <- function( A, Q, G=NULL, B=NULL, stationary=TRUE, N=1, T=
 		# long
 		dl <- dcast( dll, n + t ~ var, value.var="value" )
 		let <- c( letters[24:26], letters[1:23] )
-		if( ncol( dl ) <= 28 ) var.names <- let[ 1:(ncol( dl ) - 2) ] else var.names <- paste0( "x", ncol( dl ) - 2 )
+		# MH 0.0.17 2025-04-11: bugfix var.names (for >26 processes)
+		#var.names <- paste0( "x", ncol( dl ) - 2 ) changed to:
+		#var.names <- c( "x", "y", paste0( "z", 1:(ncol( dl ) - 4) ) )
+		if( ncol( dl ) <= 28 ) var.names <- let[ 1:(ncol( dl ) - 2) ] else var.names <- c( "x", "y", paste0( "z", 1:(ncol( dl ) - 4) ) )
 		colnames( dl )[ 3:ncol( dl ) ] <- var.names
 		# wide
 		dw.l <- sapply( var.names, function( vn ) {d<-dcast( dl, n ~ t, value.var=vn ); colnames(d)[-1] <- paste0(vn,".",colnames(d)[-1]); return(d)}, simplify=FALSE )
