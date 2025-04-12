@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.18 2025-04-12: switch procmeans to either model process means or process intercepts
 # MH 0.0.16 2023-09-25: t1.stationary NOT YET WORKING, matrix inverse of 4x4 matrix still missing
 # MH 0.0.15 2023-09-23: RI-CLPM, now with constraints for random process means, RI-CLPM2/3 discarded!!
 # MH 0.0.14 2023-09-22: RI-CLPM3, intercept set to 1 for t >= 2, freely estimated parameter for intercept (=mean) at t=1
@@ -9,7 +10,7 @@
 ## Function definition
 #### only F (number of processes) = 2 !!!
 #### t1.stationary: only FALSE !!!
-gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM"), T=2, t1.stationary=FALSE ){
+gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM"), procmeans=TRUE, T=2, t1.stationary=FALSE ){
 		
 		# cautionary note
 		if( model %in% "RI-CLPM" ) cat( "\nNote: Starting from version 0.0.15, the RI-CLPM model has changed (now with constraints for random process means)!\n      Be cautious when using old scripts that depend on versions <= 0.0.14\n\n" )
@@ -23,16 +24,26 @@ gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM"), T=2, t1.stationary=FAL
 		if( model %in% c("RI-CLPM") ){
 
 			syn <- "### Random intercepts cross-lagged panel model ###"
-			syn <- c( syn, "#   (random process means implementation)\n" )
-			# MH 0.0.15 2023-09-23: new RI-CLPM (with constraints for random process means)
-			syn <- c(syn, "# Random process means" )
-			syn <- c(syn, paste( c("mu1 =~ 1*x.1", paste0( "con1a*x.",2:T ), paste0( "con1b*y.",2:T )), collapse=" + " ),
-						  paste( c("mu2 =~ 1*y.1", paste0( "con2a*y.",2:T ), paste0( "con2b*x.",2:T )), collapse=" + " ) )
-			syn <- c(syn, c( "con1a == (1-a11)",
-							 "con2a == (1-a22)",
-							 "con1b == -1*a21",
-							 "con2b == -1*a12" ) )
-			syn <- c(syn, paste0("# Random process means (co)variances\n",
+
+			# MH 0.0.18 2025-04-12: switch procmeans to either model process means or process intercepts
+			if ( procmeans ){
+				syn <- c( syn, "#   (random process means implementation)\n" )
+				# MH 0.0.15 2023-09-23: new RI-CLPM (with constraints for random process means)
+				syn <- c(syn, "# Random process means" )
+				syn <- c(syn, paste( c("mu1 =~ 1*x.1", paste0( "con1a*x.",2:T ), paste0( "con1b*y.",2:T )), collapse=" + " ),
+							  paste( c("mu2 =~ 1*y.1", paste0( "con2a*y.",2:T ), paste0( "con2b*x.",2:T )), collapse=" + " ) )
+				syn <- c(syn, c( "con1a == (1-a11)",
+								 "con2a == (1-a22)",
+								 "con1b == -1*a21",
+								 "con2b == -1*a12" ) )
+			} else {
+				syn <- c( syn, "#   (random process intercepts implementation)\n" )
+				syn <- c(syn, "# Random process intercepts" )
+				syn <- c(syn, paste0( "mu1 =~ ", paste( c( paste0( "1*x.",2:T ) ), collapse=" + " ) ),
+							  paste0( "mu2 =~ ", paste( c( paste0( "1*y.",2:T ) ), collapse=" + " ) ) )
+			}
+			
+			syn <- c(syn, paste0( ifelse( procmeans, "# Random process means (co)variances\n", "# Random process intercepts (co)variances\n" ),
 								 "mu1 ~~ mu1var*mu1\n",
 								 "mu2 ~~ mu2var*mu2\n",
 								 "mu1 ~~ mucov*mu2" )	)				
@@ -101,7 +112,9 @@ gen.lavaan.syntax <- function( model=c("CLPM","RI-CLPM"), T=2, t1.stationary=FAL
 
 ### 
 # syn <- gen.lavaan.syntax( "RI-CLPM", T=3, t1.stationary=FALSE )
+# syn <- gen.lavaan.syntax( "RI-CLPM", procmeans=FALSE, T=3, t1.stationary=FALSE )
 # cat(syn)
+
 # cat( gen.lavaan.syntax( "RI-CLPM3", T=4 ) )
 # cat( gen.lavaan.syntax( "CLPM", T=4 ) )
 
