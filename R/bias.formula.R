@@ -6,54 +6,26 @@
 #' @description
 #' @param A autoregression matrix
 #' @param F Number of focal processes
-#' @param c1 Number of X-related confounders
-#' @param c2 Number of Y-related confounders
+#' @param C total number of confounders
+#' @param Sigma Var-cov matrix of time-specific residuals (process errors)
 #' @return
 
 ## Function definition
-bias.formula <- function( A, F, c1, c2 ){
+bias.formula <- function( A, F, C, Sigma ){
 		
 		# packages
 		# require( reshape2 ) # melt()
 		
-		# total number of confounders
-		C <- c1 + c2
-		
 		# total number of variables
-		V <- C + F
+		V <- F + C
 		
 		if ( F > 0 ){
-		
-			if( c1 > 0 ) c1t <- (F+1):(F+c1) else c1t <- NULL
-			if( c2 > 0 ) c2t <- (F+1 +c1):V  else c2t <- NULL
-			
-			ct <- list( c1t, c2t )
-			
-			for( f in 1:F ){
-				A[ct[[f]], f] <- beta_covfocal
-				A[f, ct[[f]]] <- beta_covfocal
-			}
-			
-			A[c1t, c1t][lower.tri(A[c1t, c1t], diag = FALSE)] <- beta_covfocal
-			A[c1t, c1t][upper.tri(A[c1t, c1t], diag = FALSE)] <- beta_covfocal
-			
-			A[c2t, c2t][lower.tri(A[c2t, c2t], diag = FALSE)] <- beta_covfocal
-			A[c2t, c2t][upper.tri(A[c2t, c2t], diag = FALSE)] <- beta_covfocal
-			
-			A[1:F,1:F][lower.tri(A[1:F,1:F])] <- beta_focal
-			A[1:F,1:F][upper.tri(A[1:F,1:F])] <- beta_focal
-			
-			## Check the max eigenvalue (should be less than 1 for stationarity)
-			cat( paste0( "max eigenvalue: ", max(eigen(A)$values), "\n" ) ); flush.console()
 			
 			## terms for bias formulas
 			BY <- A[1:F, 1:F, drop=FALSE]
 			if( C>0 ) BYZ <- A[1:F, (F+1):(F+C), drop=FALSE] else BYZ <- NULL
 			if( C>0 ) BZY <- A[(F+1):(F+C), 1:F, drop=FALSE] else BZY <- NULL
 			if( C>0 ) BZZ <- A[(F+1):(F+C), (F+1):(F+C), drop=FALSE] else BZZ <- NULL
-			
-			## Var-cov matrix of time-specific residuals
-			Sigma <- diag(rep(sigma, V))
 			
 			## stationary covariance matrix for first time point
 			Sigma1 <- irow( solve( diag(dim(A)[1]^2) - t(A) %x% t(A) ) %*% row(Sigma) )
@@ -64,9 +36,6 @@ bias.formula <- function( A, F, c1, c2 ){
 			
 			# identity matrices
 			IF <- diag( F )
-			
-			
-			####### results #######
 			
 			## Eq. 12, Biases of trait matrix
 			if( C > 0 ){
@@ -92,9 +61,12 @@ bias.formula <- function( A, F, c1, c2 ){
 			deltaTY <- deltaBY <- deltaBYrel <- deltaBYstar <- deltaBYstarrel <- CR <- NULL
 		}
 		
+		# max eigenvalue (should be less than 1 for stationarity)
+		A_max_eigenvalue <- max(eigen(A)$values)
+		
 		# return object
-		ret <- list( deltaTY, deltaBY, deltaBYrel, deltaBYstar, deltaBYstarrel, CR )
-		names( ret ) <- c( "deltaTY", "deltaBY", "deltaBYrel", "deltaBYstar", "deltaBYstarrel", "CR" )		
+		ret <- list( A_max_eigenvalue, deltaTY, deltaBY, deltaBYrel, deltaBYstar, deltaBYstarrel, CR )
+		names( ret ) <- c( "A_max_eigenvalue", "deltaTY", "deltaBY", "deltaBYrel", "deltaBYstar", "deltaBYstarrel", "CR" )		
 		
 		# return
 		return( ret )
@@ -135,7 +107,7 @@ bias.formula <- function( A, F, c1, c2 ){
 # sigma <- 0.5
 
 ## Number of focal processes
-# F <- 1
+# F <- 2
 
 ## Number of X-related confounders
 # c1 <- 1
@@ -156,7 +128,32 @@ bias.formula <- function( A, F, c1, c2 ){
 # A[lower.tri(A, diag = FALSE)] <- beta_covnofocal 
 # A[upper.tri(A, diag = FALSE)] <- beta_covnofocal
 
-# bias.formula( A=A, F=F, c1=c1, c2=c2 )
+# if( c1 > 0 ) c1t <- (F+1):(F+c1) else c1t <- NULL
+# if( c2 > 0 ) c2t <- (F+1 +c1):V  else c2t <- NULL
+
+# ct <- list( c1t, c2t )
+
+# for( f in 1:F ){
+	# A[ct[[f]], f] <- beta_covfocal
+	# A[f, ct[[f]]] <- beta_covfocal
+# }
+
+# A[c1t, c1t][lower.tri(A[c1t, c1t], diag = FALSE)] <- beta_covfocal
+# A[c1t, c1t][upper.tri(A[c1t, c1t], diag = FALSE)] <- beta_covfocal
+
+# A[c2t, c2t][lower.tri(A[c2t, c2t], diag = FALSE)] <- beta_covfocal
+# A[c2t, c2t][upper.tri(A[c2t, c2t], diag = FALSE)] <- beta_covfocal
+
+# A[1:F,1:F][lower.tri(A[1:F,1:F])] <- beta_focal
+# A[1:F,1:F][upper.tri(A[1:F,1:F])] <- beta_focal
+
+## Var-cov matrix of time-specific residuals
+# Sigma <- diag(rep(sigma, V))
+
+# bias.formula( A=A, F=F, C=C, Sigma=Sigma )
+
+
+
 
 
 ### test
